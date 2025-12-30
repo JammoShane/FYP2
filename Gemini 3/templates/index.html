@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Requirements Elicitation Chatbot</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #e0e5ec;
+        --primary: #4a90e2;
+        --header-bg: #fff;
+        --user-bg: #d1eaff;
+        --bot-bg: #f0f4f8;
+        --text: #333;
+        --radius: 1rem;
+        --shadow-light: rgba(255, 255, 255, 0.7);
+        --shadow-dark: rgba(0, 0, 0, 0.15);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: var(--text);
+      }
+
+      .page {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .auth-card {
+        background: #fff;
+        border-radius: var(--radius);
+        box-shadow: 8px 8px 16px var(--shadow-dark),
+          -8px -8px 16px var(--shadow-light);
+        padding: 12px;
+      }
+      .auth-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+      .auth-row input,
+      .auth-row select {
+        flex: 1;
+        min-width: 160px;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+      }
+      .auth-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .auth-actions button {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        background: var(--primary);
+        color: white;
+      }
+      .auth-actions button.secondary {
+        background: #333;
+      }
+      .auth-status {
+        margin-top: 8px;
+        font-size: 0.9rem;
+      }
+
+      .chat-wrapper {
+        width: 100%;
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+        background: var(--header-bg);
+        border-radius: var(--radius);
+        box-shadow: 8px 8px 16px var(--shadow-dark),
+          -8px -8px 16px var(--shadow-light);
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        background: var(--primary);
+        color: #fff;
+        padding: 1rem;
+        font-size: 1.25rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+      header .title {
+        flex: 1;
+      }
+      header .clear-btn {
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        transition: background 0.2s;
+      }
+      header .clear-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      #messages {
+        flex: 1;
+        padding: 1rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .entry {
+        max-width: 75%;
+        position: relative;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius);
+        word-wrap: break-word;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.05);
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+      .entry.user {
+        align-self: flex-end;
+        background: var(--user-bg);
+        border-bottom-right-radius: 0.25rem;
+      }
+      .entry.bot {
+        align-self: flex-start;
+        background: var(--bot-bg);
+        border-bottom-left-radius: 0.25rem;
+      }
+      .timestamp {
+        font-size: 0.75rem;
+        color: #777;
+        margin-top: 0.25rem;
+      }
+      .input-area {
+        display: flex;
+        padding: 0.5rem;
+        background: var(--header-bg);
+        border-top: 1px solid #ddd;
+      }
+      .input-area input {
+        flex: 1;
+        border: none;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border-radius: calc(var(--radius) / 2);
+        margin-right: 0.5rem;
+        box-shadow: inset 2px 2px 5px var(--shadow-light),
+          inset -2px -2px 5px var(--shadow-dark);
+      }
+      .input-area input:focus {
+        outline: none;
+        box-shadow: inset 1px 1px 3px var(--shadow-light),
+          inset -1px -1px 3px var(--shadow-dark), 0 0 0 2px var(--primary);
+      }
+      .input-area button {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        padding: 0 1.25rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 1rem;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.1s;
+      }
+      .input-area button:hover {
+        transform: translateY(-1px);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <div class="auth-card">
+        <div class="auth-row">
+          <input id="name" placeholder="Name (for register)" />
+          <input id="email" placeholder="Email" />
+          <input id="password" type="password" placeholder="Password" />
+          <select id="role">
+            <option>Stakeholder</option>
+            <option>Developer</option>
+            <option>Human Resources</option>
+            <option>Finance</option>
+            <option>Product Manager</option>
+            <option>Operations</option>
+            <option>Customer Support</option>
+            <option>Legal/Compliance</option>
+            <option>Security</option>
+            <option>QA/Tester</option>
+            <option>Sales</option>
+            <option>Data/Analytics</option>
+            <option>UX/UI Designer</option>
+            <option>Executive</option>
+          </select>
+        </div>
+
+        <div class="auth-actions">
+          <button id="btnRegister">Register</button>
+          <button id="btnLogin">Login</button>
+          <button id="btnLogout" class="secondary">Logout</button>
+        </div>
+
+        <div id="authStatus" class="auth-status"></div>
+      </div>
+
+      <div class="chat-wrapper">
+        <header>
+          <div class="title">Requirements Elicitation Chatbot</div>
+          <button id="clear" class="clear-btn">Clear Chat</button>
+        </header>
+
+        <div id="messages"></div>
+
+        <div class="input-area">
+          <input
+            id="input"
+            type="text"
+            placeholder="Enter requirement."
+            autocomplete="off"
+          />
+          <button id="send">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const msgs = document.getElementById("messages");
+      const input = document.getElementById("input");
+      const sendBtn = document.getElementById("send");
+      const clearBtn = document.getElementById("clear");
+
+      const authStatus = document.getElementById("authStatus");
+      const btnRegister = document.getElementById("btnRegister");
+      const btnLogin = document.getElementById("btnLogin");
+      const btnLogout = document.getElementById("btnLogout");
+
+      async function postJSON(url, payload) {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        return data;
+      }
+
+      function addMessage(text, cls) {
+        const bubble = document.createElement("div");
+        bubble.className = `entry ${cls}`;
+        bubble.innerText = text;
+
+        const time = document.createElement("div");
+        time.className = "timestamp";
+        time.innerText = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        bubble.appendChild(time);
+        msgs.appendChild(bubble);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+
+      async function loadHistory() {
+        const res = await fetch("/history");
+        const data = await res.json();
+
+        // not logged in -> clear view
+        if (!res.ok) {
+          msgs.innerHTML = "";
+          return;
+        }
+
+        msgs.innerHTML = "";
+        (data.messages || []).forEach((m) => {
+          if (m.sender === "user") addMessage(`You: ${m.content}`, "user");
+          else addMessage(m.content, "bot");
+        });
+      }
+
+      async function refreshMe() {
+        const res = await fetch("/auth/me");
+        const data = await res.json();
+        if (data.user) {
+          authStatus.textContent = `✅ Logged in as ${data.user.name} (${data.user.role})`;
+          await loadHistory(); // ✅ auto-load previous chat on refresh
+        } else {
+          authStatus.textContent = `ℹ️ Not logged in`;
+          msgs.innerHTML = "";
+        }
+      }
+
+      btnRegister.addEventListener("click", async () => {
+        try {
+          const data = await postJSON("/auth/register", {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            role: document.getElementById("role").value,
+          });
+          authStatus.textContent = `✅ Logged in as ${data.user.name} (${data.user.role})`;
+          await loadHistory(); // ✅ load chat immediately after register
+        } catch (e) {
+          authStatus.textContent = `❌ ${e.message}`;
+        }
+      });
+
+      btnLogin.addEventListener("click", async () => {
+        try {
+          const data = await postJSON("/auth/login", {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+          });
+          authStatus.textContent = `✅ Logged in as ${data.user.name} (${data.user.role})`;
+          await loadHistory(); // ✅ load previous chat immediately after login
+        } catch (e) {
+          authStatus.textContent = `❌ ${e.message}`;
+        }
+      });
+
+      btnLogout.addEventListener("click", async () => {
+        try {
+          await postJSON("/auth/logout", {});
+          authStatus.textContent = `✅ Logged out`;
+          msgs.innerHTML = ""; // ✅ clear chat window
+          input.value = ""; // ✅ clear input
+        } catch (e) {
+          authStatus.textContent = `❌ ${e.message}`;
+        }
+      });
+
+      clearBtn.addEventListener("click", async () => {
+        const res = await fetch("/reset", { method: "POST" });
+        const data = await res.json();
+        alert(data.message || data.error || "Reset done");
+        msgs.innerHTML = "";
+      });
+
+      async function send() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        addMessage(`You: ${text}`, "user");
+        input.value = "";
+
+        try {
+          const res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            addMessage(`❌ ${data.error || "Error"}`, "bot");
+            return;
+          }
+
+          if (Array.isArray(data.requirements)) {
+            data.requirements.forEach((r) => {
+              addMessage(
+                `Requirement: ${r.text} | Category: ${r.category}`,
+                "bot"
+              );
+            });
+          }
+
+          if (data.summary) {
+            addMessage(`📋 Summary:\n\n${data.summary}`, "bot");
+          } else if (data.error) {
+            const clean = data.error.replace(/^(Error:\s*)+/i, "").trim();
+            addMessage(`${clean}`, "bot");
+          }
+        } catch (e) {
+          addMessage("❌ Error: Network Error", "bot");
+        }
+      }
+
+      sendBtn.addEventListener("click", send);
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") send();
+      });
+
+      refreshMe();
+    </script>
+  </body>
+</html>
